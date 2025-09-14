@@ -30,14 +30,14 @@ public class VictimRecordConfig {
 
     @Bean
     public Job processVictimJob(){
-        return new JobBuilder("victimJob", jobRepository)
+        return new JobBuilder("victimRecordJob", jobRepository)
                 .start(processVictimStep())
                 .build();
     }
 
     @Bean
     public Step processVictimStep() {
-        return new StepBuilder("victimStep", jobRepository)
+        return new StepBuilder("victimRecordStep", jobRepository)
                 .<Victim, Victim>chunk(5, transactionManager)
                 .reader(terminatedVictimReader())
                 .writer(victimWriter())
