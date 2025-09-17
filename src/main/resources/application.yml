@@ -11,3 +11,7 @@ spring:
     driver-class-name: org.postgresql.Driver
     username: root
     password: password
+
+logging:
+  level:
+    org.springframework.batch.item.database: DEBUG
