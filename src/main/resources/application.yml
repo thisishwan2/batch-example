@@ -12,6 +12,12 @@ spring:
     username: root
     password: password
 
+  jpa:
+    show-sql: true        # SQL 실행문 출력
+    properties:
+      hibernate:
+        format_sql: true    # SQL을 보기 좋게 줄바꿈해서 출력한다
+        highlight_sql: true # SQL을 보기 좋게 색칠
 logging:
   level:
     org.springframework.batch.item.database: DEBUG
