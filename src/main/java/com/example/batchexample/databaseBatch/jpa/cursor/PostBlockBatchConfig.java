@@ -16,7 +16,9 @@ import org.springframework.batch.core.step.builder.StepBuilder;
 import org.springframework.batch.item.ItemProcessor;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.batch.item.database.JpaCursorItemReader;
+import org.springframework.batch.item.database.JpaPagingItemReader;
 import org.springframework.batch.item.database.builder.JpaCursorItemReaderBuilder;
+import org.springframework.batch.item.database.builder.JpaPagingItemReaderBuilder;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -46,12 +48,13 @@ public class PostBlockBatchConfig {
     @Bean
     public Step postBlockStep(
             JpaCursorItemReader<Post> postBlockReader,
+            JpaPagingItemReader<Post> postBlockReader2,
             PostBlockProcessor postBlockProcessor,
             ItemWriter<BlockedPost> postBlockWriter
     ) {
         return new StepBuilder("postBlockStep", jobRepository)
                 .<Post, BlockedPost>chunk(5, transactionManager)
-                .reader(postBlockReader)
+                .reader(postBlockReader2)
                 .processor(postBlockProcessor)
                 .writer(postBlockWriter)
                 .build();
@@ -79,6 +82,33 @@ public class PostBlockBatchConfig {
                         "startDateTime", startDateTime,
                         "endDateTime", endDateTime
                 ))
+                .build();
+    }
+
+    @Bean
+    @StepScope
+    public JpaPagingItemReader<Post> postBlockReader2(
+            @Value("#{jobParameters['startDateTimeStr']}") String startDateTimeStr,
+            @Value("#{jobParameters['endDateTimeStr']}") String endDateTimeStr
+    ) {
+        LocalDateTime startDateTime = LocalDateTime.parse(startDateTimeStr);
+        LocalDateTime endDateTime = LocalDateTime.parse(endDateTimeStr);
+
+        return new JpaPagingItemReaderBuilder<Post>()
+                .name("postBlockReader")
+                .entityManagerFactory(entityManagerFactory)
+                .queryString("""
+                    SELECT DISTINCT p FROM Post p 
+                    JOIN p.reports r
+                    WHERE r.reportedAt >= :startDateTime AND r.reportedAt < :endDateTime
+                    ORDER BY p.id ASC
+                    """)
+                .parameterValues(Map.of(
+                        "startDateTime", startDateTime,
+                        "endDateTime", endDateTime
+                ))
+                .pageSize(5)
+                .transacted(false)
                 .build();
     }
 

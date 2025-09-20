@@ -1,10 +1,8 @@
 package com.example.batchexample.databaseBatch.jpa.cursor;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.OneToMany;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.Getter;
+import org.hibernate.annotations.BatchSize;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -22,6 +20,7 @@ public class Post {
     private String content;       // 게시물 내용
     private String writer;        // 작성자
 
-    @OneToMany(mappedBy = "post")
+    @OneToMany(mappedBy = "post", fetch = FetchType.EAGER) // FetchType EAGER 변경
+    @BatchSize(size = 5) // @BatchSize 적용
     private List<Report> reports = new ArrayList<>();
 }
