@@ -16,8 +16,10 @@ import org.springframework.batch.core.step.builder.StepBuilder;
 import org.springframework.batch.item.ItemProcessor;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.batch.item.database.JpaCursorItemReader;
+import org.springframework.batch.item.database.JpaItemWriter;
 import org.springframework.batch.item.database.JpaPagingItemReader;
 import org.springframework.batch.item.database.builder.JpaCursorItemReaderBuilder;
+import org.springframework.batch.item.database.builder.JpaItemWriterBuilder;
 import org.springframework.batch.item.database.builder.JpaPagingItemReaderBuilder;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -50,13 +52,14 @@ public class PostBlockBatchConfig {
             JpaCursorItemReader<Post> postBlockReader,
             JpaPagingItemReader<Post> postBlockReader2,
             PostBlockProcessor postBlockProcessor,
-            ItemWriter<BlockedPost> postBlockWriter
+            ItemWriter<BlockedPost> postBlockWriter,
+            ItemWriter<BlockedPost> postBlockWriter2
     ) {
         return new StepBuilder("postBlockStep", jobRepository)
                 .<Post, BlockedPost>chunk(5, transactionManager)
                 .reader(postBlockReader2)
                 .processor(postBlockProcessor)
-                .writer(postBlockWriter)
+                .writer(postBlockWriter2)
                 .build();
     }
 
@@ -127,20 +130,28 @@ public class PostBlockBatchConfig {
         };
     }
 
-    /**
-     * 차단된 게시글 - 처형 결과 보고서
-     */
-    @Getter
-    @Builder
-    @ToString
-    public static class BlockedPost {
-        private Long postId;
-        private String writer;
-        private String title;
-        private int reportCount;
-        private double blockScore;
-        private LocalDateTime blockedAt;
+    @Bean
+    public JpaItemWriter<BlockedPost> postBlockWriter2() {
+        return new JpaItemWriterBuilder<BlockedPost>()
+                .entityManagerFactory(entityManagerFactory)
+                .usePersist(true)
+                .build();
     }
+
+//    /**
+//     * 차단된 게시글 - 처형 결과 보고서
+//     */
+//    @Getter
+//    @Builder
+//    @ToString
+//    public static class BlockedPost {
+//        private Long postId;
+//        private String writer;
+//        private String title;
+//        private int reportCount;
+//        private double blockScore;
+//        private LocalDateTime blockedAt;
+//    }
 
     @Component
     public static class PostBlockProcessor implements ItemProcessor<Post, BlockedPost> {
