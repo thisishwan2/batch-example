@@ -53,10 +53,10 @@ public class PostBlockBatchConfig {
             JpaPagingItemReader<Post> postBlockReader2,
             PostBlockProcessor postBlockProcessor,
             ItemWriter<BlockedPost> postBlockWriter,
-            ItemWriter<BlockedPost> postBlockWriter2
+            ItemWriter<Post> postBlockWriter2
     ) {
         return new StepBuilder("postBlockStep", jobRepository)
-                .<Post, BlockedPost>chunk(5, transactionManager)
+                .<Post, Post>chunk(5, transactionManager)
                 .reader(postBlockReader2)
                 .processor(postBlockProcessor)
                 .writer(postBlockWriter2)
@@ -131,10 +131,10 @@ public class PostBlockBatchConfig {
     }
 
     @Bean
-    public JpaItemWriter<BlockedPost> postBlockWriter2() {
-        return new JpaItemWriterBuilder<BlockedPost>()
+    public JpaItemWriter<Post> postBlockWriter2() {
+        return new JpaItemWriterBuilder<Post>()
                 .entityManagerFactory(entityManagerFactory)
-                .usePersist(true)
+                .usePersist(false)
                 .build();
     }
 
@@ -154,15 +154,17 @@ public class PostBlockBatchConfig {
 //    }
 
     @Component
-    public static class PostBlockProcessor implements ItemProcessor<Post, BlockedPost> {
+    public static class PostBlockProcessor implements ItemProcessor<Post, Post> {
 
         @Override
-        public BlockedPost process(Post post) {
+        public Post process(Post post) {
             // 각 신고의 신뢰도를 기반으로 차단 점수 계산
             double blockScore = calculateBlockScore(post.getReports());
             log.info("blockScore" + blockScore);
             // 차단 점수가 기준치를 넘으면 처형 결정
             if (blockScore >= 7.0) {
+                post.setBlockedAt(LocalDateTime.now());
+                /*
                 return BlockedPost.builder()
                         .postId(post.getId())
                         .writer(post.getWriter())
@@ -171,6 +173,9 @@ public class PostBlockBatchConfig {
                         .blockScore(blockScore)
                         .blockedAt(LocalDateTime.now())
                         .build();
+
+                 */
+                return post;
             }
 
             return null;  // 무죄 방면

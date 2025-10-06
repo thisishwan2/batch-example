@@ -1,20 +1,24 @@
 package com.example.batchexample.databaseBatch.jpa.cursor;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.time.LocalDateTime;
+
 
 @Entity
 @Table(name = "blocked_posts")
 @Getter
-@Builder
+@NoArgsConstructor
 public class BlockedPost {
     @Id
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "blocked_posts_id_seq")
+    @SequenceGenerator(name = "blocked_posts_id_seq", sequenceName = "blocked_posts_id_seq")
+    private Long id;
+
     @Column(name = "post_id")
     private Long postId;
 
@@ -29,4 +33,15 @@ public class BlockedPost {
 
     @Column(name = "blocked_at")
     private LocalDateTime blockedAt;
+
+    @Builder
+    public BlockedPost(Long postId, String writer, String title,
+                       int reportCount, double blockScore, LocalDateTime blockedAt) {
+        this.postId = postId;
+        this.writer = writer;
+        this.title = title;
+        this.reportCount = reportCount;
+        this.blockScore = blockScore;
+        this.blockedAt = blockedAt;
+    }
 }
